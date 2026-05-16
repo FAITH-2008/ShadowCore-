@@ -8,6 +8,7 @@ async function startBot() {
     auth: state,
     printQRInTerminal: true
   })
+ browser: ['Render Bot', 'Chrome', '1.0.0']
 
   sock.ev.on('connection.update', (update) => {
     const { connection, qr, lastDisconnect } = update
