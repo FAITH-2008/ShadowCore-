@@ -1,4 +1,7 @@
-import makeWASocket, {
+
+console.log("🔥 SERVER STARTED")
+console.log("PHONE_NUMBER =", process.env.PHONE_NUMBER)
+  import makeWASocket, {
   useMultiFileAuthState,
   DisconnectReason,
   fetchLatestBaileysVersion
