@@ -28,18 +28,35 @@ async function startBot() {
     console.log("🔑 Pairing Code:", code)
   }
 
-  sock.ev.on('connection.update', (update) => {
-    const { connection, lastDisconnect } = update
+  ssock.ev.on('connection.update', async (update) => {
+  const { connection, lastDisconnect } = update
 
-    if (connection === 'open') {
-      console.log('✅ Bot is online!')
+  if (connection === 'open') {
+    console.log('✅ Connected to WhatsApp (waiting for pairing step)')
+  }
+
+  if (connection === 'close') {
+    console.log('❌ Disconnected')
+  }
+
+  // 🔐 REQUEST PAIRING CODE ONLY WHEN READY
+  if (connection === 'open' && !sock.authState.creds.registered) {
+    try {
+      const phoneNumber = process.env.PHONE_NUMBER
+
+      if (!phoneNumber) {
+        console.log("❌ PHONE_NUMBER not set")
+        return
+      }
+
+      const code = await sock.requestPairingCode(phoneNumber)
+      console.log("🔑 Pairing Code:", code)
+
+    } catch (err) {
+      console.log("❌ Pairing error:", err.message)
     }
-
-    if (connection === 'close') {
-      const shouldReconnect =
-        lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut
-
-      console.log('❌ Disconnected')
+  }
+})
 
       if (shouldReconnect) startBot()
     }
