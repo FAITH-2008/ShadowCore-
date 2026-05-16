@@ -1,11 +1,11 @@
-
-console.log("🔥 SERVER STARTED")
-console.log("PHONE_NUMBER =", process.env.PHONE_NUMBER)
-  import makeWASocket, {
+import makeWASocket, {
   useMultiFileAuthState,
   DisconnectReason,
   fetchLatestBaileysVersion
 } from '@whiskeysockets/baileys'
+
+console.log("🔥 SERVER STARTED")
+console.log("PHONE_NUMBER =", process.env.PHONE_NUMBER)
 
 async function startBot() {
   try {
@@ -19,24 +19,28 @@ async function startBot() {
       browser: ['Render Bot', 'Chrome', '1.0.0']
     })
 
-    // 🔐 PAIRING CODE (ONLY ONCE)
-    if (!sock.authState.creds.registered) {
-      const phoneNumber = process.env.PHONE_NUMBER
-
-      if (!phoneNumber) {
-        console.log("❌ PHONE_NUMBER not set")
-        return
-      }
-
-      const code = await sock.requestPairingCode(phoneNumber)
-      console.log("🔑 Pairing Code:", code)
-    }
-
-    sock.ev.on('connection.update', (update) => {
+    sock.ev.on('connection.update', async (update) => {
       const { connection, lastDisconnect } = update
 
       if (connection === 'open') {
         console.log('✅ Bot is online!')
+
+        // 🔐 REQUEST PAIRING CODE HERE (SAFE PLACE)
+        if (!sock.authState.creds.registered) {
+          const phoneNumber = process.env.PHONE_NUMBER
+
+          if (!phoneNumber) {
+            console.log("❌ PHONE_NUMBER not set")
+            return
+          }
+
+          try {
+            const code = await sock.requestPairingCode(phoneNumber)
+            console.log("🔑 Pairing Code:", code)
+          } catch (err) {
+            console.log("❌ Pairing error:", err.message)
+          }
+        }
       }
 
       if (connection === 'close') {
