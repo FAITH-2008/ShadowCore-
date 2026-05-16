@@ -22,12 +22,21 @@ async function startBot() {
     }
 
     if (connection === 'close') {
-      const shouldReconnect =
-        lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut
+  console.log('❌ Connection closed.')
 
-      console.log('❌ Disconnected. Restarting...')
+  const shouldReconnect =
+    lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut
 
-      if (shouldReconnect) startBot()
+  if (shouldReconnect) {
+    console.log('🔄 Reconnecting in 5 seconds...')
+
+    setTimeout(() => {
+      startBot()
+    }, 5000)
+  } else {
+    console.log('🚪 Logged out. Scan QR again.')
+  }
+    
     }
   })
 
