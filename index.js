@@ -6,7 +6,7 @@ async function startBot() {
 
   const sock = makeWASocket({
     auth: state,
-    printQRInTerminal: false
+    printQRInTerminal: true
   })
 
   sock.ev.on('connection.update', (update) => {
