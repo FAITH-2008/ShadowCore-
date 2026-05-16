@@ -4,18 +4,8 @@ import makeWASocket, {
   fetchLatestBaileysVersion
 } from '@whiskeysockets/baileys'
 
-import readline from 'readline'
-
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-})
-
-const question = (text) => new Promise(resolve => rl.question(text, resolve))
-
 async function startBot() {
   const { state, saveCreds } = await useMultiFileAuthState('./auth')
-
   const { version } = await fetchLatestBaileysVersion()
 
   const sock = makeWASocket({
@@ -25,12 +15,17 @@ async function startBot() {
     browser: ['Render Bot', 'Chrome', '1.0.0']
   })
 
-  // 🔐 PAIRING CODE LOGIN
+  // 🔐 PAIRING CODE (NO READLINE)
   if (!sock.authState.creds.registered) {
-    const phone = await question('📱 Enter your WhatsApp number (with country code): ')
+    const phoneNumber = process.env.PHONE_NUMBER
 
-    const code = await sock.requestPairingCode(phone.trim())
-    console.log(`🔑 Your pairing code: ${code}`)
+    if (!phoneNumber) {
+      console.log("❌ Set PHONE_NUMBER in Render")
+      return
+    }
+
+    const code = await sock.requestPairingCode(phoneNumber)
+    console.log("🔑 Pairing Code:", code)
   }
 
   sock.ev.on('connection.update', (update) => {
@@ -52,7 +47,6 @@ async function startBot() {
 
   sock.ev.on('creds.update', saveCreds)
 
-  // 💬 SIMPLE COMMANDS
   sock.ev.on('messages.upsert', async ({ messages }) => {
     const msg = messages[0]
     if (!msg.message) return
