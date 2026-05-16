@@ -19,55 +19,29 @@ async function startBot() {
       browser: ['Render Bot', 'Chrome', '1.0.0']
     })
 
+    // 📡 CONNECTION HANDLER (ONLY ONE)
     sock.ev.on('connection.update', async (update) => {
-  const { connection } = update
-
-  if (connection === 'connecting') {
-    console.log("📡 WhatsApp connecting...")
-  }
-
-  if (connection === 'open') {
-    console.log("✅ Bot is ONLINE")
-
-    // 🔐 Pairing code runs ONCE when connection opens
-    if (!sock.authState.creds.registered) {
-      const phoneNumber = process.env.PHONE_NUMBER
-
-      if (!phoneNumber) {
-        console.log("❌ PHONE_NUMBER not set in Render")
-        return
-      }
-
-      try {
-        const code = await sock.requestPairingCode(phoneNumber)
-        console.log("🔑 PAIRING CODE:", code)
-      } catch (err) {
-        console.log("❌ Pairing error:", err.message)
-      }
-    }
-  }
-
-  if (connection === 'close') {
-    console.log("❌ Disconnected")
-  }
-})', async (update) => {
       const { connection, lastDisconnect } = update
 
-      if (connection === 'open') {
-        console.log('✅ Bot is online!')
+      if (connection === 'connecting') {
+        console.log("📡 Connecting to WhatsApp...")
+      }
 
-        // 🔐 REQUEST PAIRING CODE HERE (SAFE PLACE)
+      if (connection === 'open') {
+        console.log("✅ Bot is ONLINE")
+
+        // 🔐 Pairing code ONLY ON FIRST LOGIN
         if (!sock.authState.creds.registered) {
           const phoneNumber = process.env.PHONE_NUMBER
 
           if (!phoneNumber) {
-            console.log("❌ PHONE_NUMBER not set")
+            console.log("❌ PHONE_NUMBER not set in Render")
             return
           }
 
           try {
             const code = await sock.requestPairingCode(phoneNumber)
-            console.log("🔑 Pairing Code:", code)
+            console.log("🔑 PAIRING CODE:", code)
           } catch (err) {
             console.log("❌ Pairing error:", err.message)
           }
@@ -75,17 +49,22 @@ async function startBot() {
       }
 
       if (connection === 'close') {
-        const shouldReconnect =
-          lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut
+        const reason = lastDisconnect?.error?.output?.statusCode
 
-        console.log('❌ Disconnected')
+        console.log("❌ Disconnected. Reason:", reason)
 
-        if (shouldReconnect) startBot()
+        const shouldReconnect = reason !== DisconnectReason.loggedOut
+
+        if (shouldReconnect) {
+          console.log("🔄 Reconnecting...")
+          startBot()
+        }
       }
     })
 
     sock.ev.on('creds.update', saveCreds)
 
+    // 💬 MESSAGES
     sock.ev.on('messages.upsert', async ({ messages }) => {
       const msg = messages[0]
       if (!msg.message) return
