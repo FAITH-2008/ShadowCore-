@@ -1,34 +1,65 @@
-import venom from "venom-bot";
+import makeWASocket, { useMultiFileAuthState, DisconnectReason } from '@whiskeysockets/baileys'
+import qrcode from 'qrcode-terminal'
 
-venom
-  .create({
-    session: "my-session",
-    multidevice: true
+async function startBot() {
+  const { state, saveCreds } = await useMultiFileAuthState('./auth')
+
+  const sock = makeWASocket({
+    auth: state,
+    printQRInTerminal: false
   })
-  .then((client) => start(client))
-  .catch((err) => console.log(err));
 
-function start(client) {
-  console.log("Bot is online ✅");
+  sock.ev.on('connection.update', (update) => {
+    const { connection, qr, lastDisconnect } = update
 
-  client.onMessage(async (message) => {
-    if (!message.body) return;
-
-    const text = message.body.toLowerCase();
-
-    if (text === "hi") {
-      await client.sendText(message.from, "Hello 👋 I am your bot");
+    if (qr) {
+      console.log('📲 Scan QR below:')
+      qrcode.generate(qr, { small: true })
     }
 
-    if (text === "menu") {
-      await client.sendText(
-        message.from,
-        "📌 MENU:\n- hi\n- menu\n- ping"
-      );
+    if (connection === 'open') {
+      console.log('✅ Bot is online!')
     }
 
-    if (text === "ping") {
-      await client.sendText(message.from, "🏓 Pong!");
+    if (connection === 'close') {
+      const shouldReconnect =
+        lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut
+
+      console.log('❌ Disconnected. Restarting...')
+
+      if (shouldReconnect) startBot()
     }
-  });
-  }
+  })
+
+  sock.ev.on('creds.update', saveCreds)
+
+  sock.ev.on('messages.upsert', async ({ messages }) => {
+    const msg = messages[0]
+    if (!msg.message) return
+
+    const text =
+      msg.message.conversation ||
+      msg.message.extendedTextMessage?.text
+
+    const chat = msg.key.remoteJid
+    if (!text) return
+
+    const command = text.toLowerCase()
+
+    if (command === 'hi') {
+      await sock.sendMessage(chat, { text: 'Hello 👋 I am your bot' })
+    }
+
+    if (command === 'menu') {
+      await sock.sendMessage(chat, {
+        text: '📌 MENU:\n- hi\n- menu\n- ping'
+      })
+    }
+
+    if (command === 'ping') {
+      await sock.sendMessage(chat, { text: '🏓 Pong!' })
+    }
+  })
+}
+
+startBot()
