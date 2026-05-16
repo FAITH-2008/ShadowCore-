@@ -20,6 +20,37 @@ async function startBot() {
     })
 
     sock.ev.on('connection.update', async (update) => {
+  const { connection } = update
+
+  if (connection === 'connecting') {
+    console.log("📡 WhatsApp connecting...")
+  }
+
+  if (connection === 'open') {
+    console.log("✅ Bot is ONLINE")
+
+    // 🔐 Pairing code runs ONCE when connection opens
+    if (!sock.authState.creds.registered) {
+      const phoneNumber = process.env.PHONE_NUMBER
+
+      if (!phoneNumber) {
+        console.log("❌ PHONE_NUMBER not set in Render")
+        return
+      }
+
+      try {
+        const code = await sock.requestPairingCode(phoneNumber)
+        console.log("🔑 PAIRING CODE:", code)
+      } catch (err) {
+        console.log("❌ Pairing error:", err.message)
+      }
+    }
+  }
+
+  if (connection === 'close') {
+    console.log("❌ Disconnected")
+  }
+})', async (update) => {
       const { connection, lastDisconnect } = update
 
       if (connection === 'open') {
