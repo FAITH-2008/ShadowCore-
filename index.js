@@ -53,26 +53,7 @@ async function startBot() {
       console.log("📡 Connecting...")
     }
 
-    if (connection === "open") {
-      console.log("✅ BOT CONNECTED")
-
-      // 🔐 Pairing code (ONLY ONCE)
-      if (!sock.authState?.creds?.registered) {
-        const phone = process.env.PHONE_NUMBER
-
-        if (!phone) {
-          console.log("❌ PHONE_NUMBER missing in Render")
-          return
-        }
-
-        try {
-          const code = await sock.requestPairingCode(phone)
-          console.log("🔑 PAIRING CODE:", code)
-        } catch (err) {
-          console.log("❌ Pairing error:", err.message)
-        }
-      }
-    }
+    iHI IM RIGHT GERE DON'T FORGET 
 
     if (connection === "close") {
       const reason = lastDisconnect?.error?.output?.statusCode
