@@ -61,26 +61,39 @@ async function startBot() {
 
     // ================= CONNECTION =================
     sock.ev.on("connection.update", async (update) => {
-      const { connection, lastDisconnect } = update
+  const { connection, lastDisconnect } = update
 
-      if (!connection) return
-      console.log("📡 Status:", connection)
+  if (connection) {
+    console.log("📡 Status:", connection)
+  }
 
-      if (connection === "open") {
-        console.log("✅ PRO BOT ONLINE")
+  if (connection === "open") {
+    console.log("✅ BOT CONNECTED")
+
+    const phone = process.env.PHONE_NUMBER
+
+    if (phone && !sock.authState?.creds?.registered) {
+      try {
+        const code = await sock.requestPairingCode(phone)
+        console.log("🔑 PAIRING CODE:", code)
+      } catch (err) {
+        console.log("❌ Pairing error:", err.message)
       }
+    }
+  }
 
-      if (connection === "close") {
-        running = false
-        const reason = lastDisconnect?.error?.output?.statusCode
+  if (connection === "close") {
+    const reason = lastDisconnect?.error?.output?.statusCode
 
-        console.log("❌ Disconnected:", reason)
+    console.log("❌ Disconnected:", reason)
 
-        if (reason !== DisconnectReason.loggedOut) {
-          setTimeout(startBot, 5000)
-        }
-      }
-    })
+    running = false
+
+    if (reason !== DisconnectReason.loggedOut) {
+      setTimeout(startBot, 5000)
+    }
+  }
+})
 
     sock.ev.on("creds.update", saveCreds)
 
