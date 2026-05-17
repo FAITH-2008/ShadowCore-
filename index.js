@@ -40,30 +40,6 @@ async function startBot() {
 
   // ================= CONNECTION =================
   sock.ev.on("connection.update", async (update) => {
-  const { connection } = update
-
-  console.log("📡 State:", connection)
-
-  if (!sock.authState?.creds?.registered) {
-    const phone = process.env.PHONE_NUMBER
-
-    if (!phone) {
-      console.log("❌ PHONE_NUMBER missing in Render")
-      return
-    }
-
-    try {
-      const code = await sock.requestPairingCode(phone)
-      console.log("🔑 PAIRING CODE:", code)
-    } catch (err) {
-      console.log("❌ Pairing error:", err.message)
-    }
-  }  
-
-  if (connection === "close") {
-    console.log("❌ Disconnected")
-  }
-
     const { connection, lastDisconnect } = update
 
     if (connection === "connecting") {
