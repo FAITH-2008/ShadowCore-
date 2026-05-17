@@ -53,7 +53,41 @@ async function startBot() {
       console.log("📡 Connecting...")
     }
 
-    iHI IM RIGHT GERE DON'T FORGET 
+    sock.ev.on("connection.update", async (update) => {
+  const { connection, lastDisconnect } = update
+
+  if (connection === "connecting") {
+    console.log("📡 Connecting...")
+  }
+
+  if (connection === "open") {
+    console.log("✅ BOT CONNECTED")
+
+    // 🔐 Pairing code (ONLY ONCE)
+    if (!sock.authState?.creds?.registered) {
+      const phone = process.env.PHONE_NUMBER
+
+      if (!phone) {
+        console.log("❌ PHONE_NUMBER missing in Render")
+        return
+      }
+
+      try {
+        setTimeout(async () => {
+          const code = await sock.requestPairingCode(phone)
+          console.log("🔑 PAIRING CODE:", code)
+        }, 3000)
+      } catch (err) {
+        console.log("❌ Pairing error:", err.message)
+      }
+    }
+  }
+
+  if (connection === "close") {
+    const reason = lastDisconnect?.error?.output?.statusCode
+    console.log("❌ Disconnected:", reason)
+  }
+})
 
     if (connection === "close") {
       const reason = lastDisconnect?.error?.output?.statusCode
