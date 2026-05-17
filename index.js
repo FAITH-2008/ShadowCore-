@@ -20,7 +20,7 @@ app.listen(PORT, () => {
 console.log("🔥 PRO BOT STARTING...")
 
 // ================= ADMIN SYSTEM =================
-let ADMIN_LIST = ["234XXXXXXXXXX"]
+let ADMIN_LIST = ["2348123456789"]
 
 function isAdmin(jid) {
   return ADMIN_LIST.includes(jid.split("@")[0])
