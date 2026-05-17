@@ -58,12 +58,12 @@ async function startBot() {
     } catch (err) {
       console.log("❌ Pairing error:", err.message)
     }
-  }
+  }  
 
   if (connection === "close") {
     console.log("❌ Disconnected")
   }
-}) => {
+
     const { connection, lastDisconnect } = update
 
     if (connection === "connecting") {
