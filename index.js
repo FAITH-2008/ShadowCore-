@@ -44,7 +44,7 @@ async function startBot() {
   })
 
   // ================= CONNECTION =================
-  sock.ev.on("connection.update", async (update) => {
+  sock.ev.on("connection.update", async (update)
     const { connection, lastDisconnect } = update
 
     console.log("📡 State:", connection)
