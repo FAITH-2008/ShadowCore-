@@ -56,6 +56,46 @@ async function startBot() {
     sock.ev.on("connection.update", async (update) => {
   const { connection, lastDisconnect } = update
 
+  console.log("📡 State:", connection)
+
+  if (connection === "connecting") {
+    console.log("📡 Connecting...")
+  }
+
+  if (connection === "open") {
+    console.log("✅ BOT CONNECTED")
+
+    const phone = process.env.PHONE_NUMBER
+
+    if (!phone) {
+      console.log("❌ PHONE_NUMBER missing in Render")
+      return
+    }
+
+    // 🔐 IMPORTANT: delay pairing until WA fully settles
+    setTimeout(async () => {
+      try {
+        const code = await sock.requestPairingCode(phone)
+        console.log("🔑 PAIRING CODE:", code)
+      } catch (err) {
+        console.log("❌ Pairing error:", err.message)
+      }
+    }, 5000)
+  }
+
+  if (connection === "close") {
+    const reason = lastDisconnect?.error?.output?.statusCode
+
+    console.log("❌ Disconnected:", reason)
+
+    if (reason !== DisconnectReason.loggedOut) {
+      console.log("🔄 Reconnecting...")
+      setTimeout(() => startBot(), 3000)
+    }
+  }
+})(update) => {
+  const { connection, lastDisconnect } = update
+
   if (connection === "connecting") {
     console.log("📡 Connecting...")
   }
