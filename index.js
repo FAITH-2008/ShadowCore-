@@ -8,30 +8,41 @@ import makeWASocket, {
 const app = express()
 const PORT = process.env.PORT || 3000
 
-app.get("/", (_, res) => res.send("Bot is running ✅"))
+app.get("/", (_, res) => {
+  res.send("🚀 Pro Bot Running")
+})
 
 app.listen(PORT, () => {
   console.log("🌐 Server running on", PORT)
 })
 
 // ================= START LOG =================
-console.log("🔥 BOT STARTING...")
-console.log("PHONE_NUMBER =", process.env.PHONE_NUMBER)
+console.log("🔥 PRO BOT STARTING...")
+
+// ================= ADMIN SYSTEM =================
+let ADMIN_LIST = ["234XXXXXXXXXX"]
+
+function isAdmin(jid) {
+  return ADMIN_LIST.includes(jid.split("@")[0])
+}
 
 // ================= COMMAND SYSTEM =================
 const commands = new Map()
 
-function addCommand(cmd, fn) {
-  commands.set(cmd, fn)
+function addCommand(cmd, fn, adminOnly = false) {
+  commands.set(cmd, { fn, adminOnly })
 }
 
 const reply = async (sock, chat, text) => {
-  await sock.sendMessage(chat, { text })
+  try {
+    await sock.sendMessage(chat, { text })
+  } catch (e) {
+    console.log("Reply error:", e.message)
+  }
 }
 
 // ================= BOT CORE =================
 let running = false
-let sockGlobal = null
 
 async function startBot() {
   if (running) return
@@ -45,42 +56,27 @@ async function startBot() {
       version,
       auth: state,
       printQRInTerminal: false,
-      browser: ["Render Bot", "Chrome", "1.0.0"]
+      browser: ["PRO BOT", "Chrome", "1.0.0"]
     })
-
-    sockGlobal = sock
 
     // ================= CONNECTION =================
     sock.ev.on("connection.update", async (update) => {
       const { connection, lastDisconnect } = update
 
+      if (!connection) return
       console.log("📡 Status:", connection)
 
       if (connection === "open") {
-        console.log("✅ BOT CONNECTED")
-
-        const phone = process.env.PHONE_NUMBER
-
-        if (phone && !sock.authState.creds.registered) {
-          setTimeout(async () => {
-            try {
-              const code = await sock.requestPairingCode(phone)
-              console.log("🔑 PAIRING CODE:", code)
-            } catch (err) {
-              console.log("❌ Pairing error:", err.message)
-            }
-          }, 5000)
-        }
+        console.log("✅ PRO BOT ONLINE")
       }
 
       if (connection === "close") {
+        running = false
         const reason = lastDisconnect?.error?.output?.statusCode
+
         console.log("❌ Disconnected:", reason)
 
-        running = false
-
         if (reason !== DisconnectReason.loggedOut) {
-          console.log("🔄 Restarting...")
           setTimeout(startBot, 5000)
         }
       }
@@ -91,7 +87,7 @@ async function startBot() {
     // ================= MESSAGE HANDLER =================
     sock.ev.on("messages.upsert", async ({ messages }) => {
       try {
-        const msg = messages[0]
+        const msg = messages?.[0]
         if (!msg?.message) return
 
         const text =
@@ -101,17 +97,25 @@ async function startBot() {
         if (!text) return
 
         const chat = msg.key.remoteJid
-        const cmd = text.toLowerCase().split(" ")[0]
+        const sender = chat
+        const cmd = text.toLowerCase().trim().split(" ")[0]
 
-        if (commands.has(cmd)) {
-          await commands.get(cmd)(sock, chat, msg, text)
+        if (!commands.has(cmd)) return
+
+        const { fn, adminOnly } = commands.get(cmd)
+
+        if (adminOnly && !isAdmin(sender)) {
+          return reply(sock, chat, "🚫 Admin only command")
         }
-      } catch (e) {
-        console.log("Message error:", e.message)
+
+        await fn(sock, chat, msg, text)
+
+      } catch (err) {
+        console.log("Message error:", err.message)
       }
     })
 
-    console.log("🤖 Bot loaded")
+    console.log("🤖 BOT READY")
 
   } catch (err) {
     console.log("❌ Fatal error:", err.message)
@@ -120,66 +124,58 @@ async function startBot() {
   }
 }
 
-// ================= BASIC COMMANDS =================
-addCommand("hi", async (sock, chat) => reply(sock, chat, "👋 Hello!"))
-addCommand("ping", async (sock, chat) => reply(sock, chat, "🏓 Pong!"))
-addCommand("menu", async (sock, chat) => reply(sock, chat, "📌 Commands ready"))
-addCommand("help", async (sock, chat) => reply(sock, chat, "Type menu"))
+// ================= PUBLIC COMMANDS =================
+addCommand("hi", async (sock, chat) =>
+  reply(sock, chat, "👋 Hello!")
+)
 
-// ================= SYSTEM COMMANDS =================
-addCommand("time", async (sock, chat) => reply(sock, chat, new Date().toLocaleTimeString()))
-addCommand("date", async (sock, chat) => reply(sock, chat, new Date().toDateString()))
-addCommand("uptime", async (sock, chat) => reply(sock, chat, `⏱ ${process.uptime()}s`))
-addCommand("id", async (sock, chat) => reply(sock, chat, chat))
+addCommand("ping", async (sock, chat) =>
+  reply(sock, chat, "🏓 Pong!")
+)
 
-// ================= FUN COMMANDS =================
-addCommand("joke", async (sock, chat) => {
-  const j = ["😂 Code has bugs because devs eat snacks", "🤣 Debugging = guessing game", "😆 My code works… I don’t know why"]
-  reply(sock, chat, j[Math.floor(Math.random() * j.length)])
-})
+addCommand("menu", async (sock, chat) =>
+  reply(sock, chat, "📌 hi | ping | ai | time | uptime")
+)
 
-addCommand("quote", async (sock, chat) => {
-  const q = ["💡 Keep coding", "🔥 Never stop learning", "🚀 Small steps matter"]
-  reply(sock, chat, q[Math.floor(Math.random() * q.length)])
-})
+// ================= SYSTEM =================
+addCommand("time", async (sock, chat) =>
+  reply(sock, chat, `🕒 ${new Date().toLocaleTimeString()}`)
+)
 
-// ================= TOOLS =================
-addCommand("calc", async (sock, chat, msg, text) => {
-  try {
-    const expr = text.split(" ").slice(1).join(" ")
-    reply(sock, chat, `🧮 ${eval(expr)}`)
-  } catch {
-    reply(sock, chat, "❌ Error")
+addCommand("uptime", async (sock, chat) =>
+  reply(sock, chat, `⏱ ${Math.floor(process.uptime())}s`)
+)
+
+// ================= 🤖 AI COMMAND (ADDED HERE) =================
+addCommand("ai", async (sock, chat, msg, text) => {
+  const prompt = text.split(" ").slice(1).join(" ")
+
+  if (!prompt) {
+    return reply(sock, chat, "🤖 Example: ai what is javascript")
   }
+
+  const answers = [
+    `🧠 AI Response: ${prompt}`,
+    `💡 Thinking about: ${prompt}`,
+    `🤖 You asked: ${prompt} — interesting question!`,
+    `⚡ AI Mode: ${prompt}`
+  ]
+
+  const pick = answers[Math.floor(Math.random() * answers.length)]
+
+  reply(sock, chat, pick)
 })
 
-addCommand("echo", async (sock, chat, msg, text) => {
-  reply(sock, chat, text.split(" ").slice(1).join(" "))
+// ================= FUN =================
+addCommand("joke", async (sock, chat) => {
+  const jokes = [
+    "😂 Coding is life",
+    "🤣 My code works sometimes",
+    "😆 Debugging is fun"
+  ]
+
+  reply(sock, chat, jokes[Math.floor(Math.random() * jokes.length)])
 })
-
-// ================= GROUP SAFE =================
-addCommand("tagall", async (sock, chat) => reply(sock, chat, "⚠️ Not enabled"))
-addCommand("groupinfo", async (sock, chat) => reply(sock, chat, "⚠️ Not enabled"))
-
-// ================= API PLACEHOLDERS (SAFE) =================
-const apis = [
-  "weather","news","ai","translate","lyrics","movie",
-  "image","sticker","yt","play","download","search",
-  "define","qr","shorturl","voice"
-]
-
-apis.forEach(cmd => {
-  addCommand(cmd, async (sock, chat) => {
-    reply(sock, chat, `⚠️ ${cmd} needs API setup`)
-  })
-})
-
-// ================= AUTO EXPAND TO 80+ =================
-for (let i = 1; i <= 50; i++) {
-  addCommand(`cmd${i}`, async (sock, chat) => {
-    reply(sock, chat, `⚡ cmd${i} active`)
-  })
-}
 
 // ================= START =================
 startBot()
