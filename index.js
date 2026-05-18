@@ -67,23 +67,33 @@ async function startBot() {
     console.log("📡 Status:", connection)
   }
 
-  if (connection === "open") {
-    console.log("✅ BOT CONNECTED")
+  // ===== REQUEST PAIRING CODE =====
+  if (connection === "connecting") {
 
     const phone = process.env.PHONE_NUMBER
 
-    if (phone) {
+    if (!phone) {
+      return console.log("❌ PHONE_NUMBER missing")
+    }
+
+    try {
       console.log("📲 Requesting pairing code...")
 
-      try {
-        const code = await sock.requestPairingCode(phone)
-        console.log("🔑 PAIRING CODE:", code)
-      } catch (err) {
-        console.log("❌ Pairing error:", err.message)
-      }
+      const code = await sock.requestPairingCode(phone)
+
+      console.log("🔑 PAIRING CODE:", code)
+
+    } catch (err) {
+      console.log("❌ Pairing error:", err.message)
     }
   }
 
+  // ===== CONNECTED =====
+  if (connection === "open") {
+    console.log("✅ BOT CONNECTED")
+  }
+
+  // ===== DISCONNECTED =====
   if (connection === "close") {
     const reason = lastDisconnect?.error?.output?.statusCode
 
@@ -92,6 +102,7 @@ async function startBot() {
     running = false
 
     if (reason !== DisconnectReason.loggedOut) {
+      console.log("🔄 Restarting...")
       setTimeout(startBot, 5000)
     }
   }
