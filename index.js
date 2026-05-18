@@ -68,7 +68,7 @@ async function startBot() {
   }
 
   // ===== REQUEST PAIRING CODE =====
-if (connection === "connecting") {
+if (connection === "connecting" && !sock.authState?.creds?.registered) {
 
   const phone = process.env.PHONE_NUMBER
 
