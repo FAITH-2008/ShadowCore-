@@ -68,20 +68,26 @@ async function startBot() {
       }
 
       // ===== PAIRING (ONLY ON FIRST CONNECT) =====
-      if (connection === "open") {
-        console.log("✅ BOT CONNECTED")
+      if (connection === "connecting") {
+  console.log("📡 Connecting...")
 
-        const phone = process.env.PHONE_NUMBER
+  const phone = process.env.PHONE_NUMBER
 
-        if (phone && !sock.authState?.creds?.registered) {
-          try {
-            console.log("📲 Requesting pairing code...")
-            const code = await sock.requestPairingCode(phone)
-            console.log("🔑 PAIRING CODE:", code)
-          } catch (err) {
-            console.log("❌ Pairing error:", err.message)
-          }
-        }
+  if (!phone) {
+    console.log("❌ PHONE_NUMBER missing in env")
+    return
+  }
+
+  try {
+    // ONLY ONCE PER SESSION
+    if (!sock.authState?.creds?.registered) {
+      console.log("📲 Requesting pairing code...")
+      const code = await sock.requestPairingCode(phone)
+      console.log("🔑 PAIRING CODE:", code)
+    }
+  } catch (err) {
+    console.log("❌ Pairing error:", err.message)
+  }
       }
 
       // ===== DISCONNECT HANDLER =====
