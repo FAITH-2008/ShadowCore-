@@ -67,7 +67,7 @@ async function startBot() {
     console.log("📡 Status:", connection)
   }
 
-  // ===== REQUEST PAIRING CODE (FIXED) =====
+  // ===== REQUEST PAIRING CODE =====
 if (connection === "connecting") {
 
   const phone = process.env.PHONE_NUMBER
@@ -76,17 +76,15 @@ if (connection === "connecting") {
     return console.log("❌ PHONE_NUMBER missing")
   }
 
-  // only request pairing ONCE
-  if (true) {
-      console.log("📲 Requesting pairing code...")
+  try {
+    console.log("📲 Requesting pairing code...")
 
-      const code = await sock.requestPairingCode(phone)
+    const code = await sock.requestPairingCode(phone)
 
-      console.log("🔑 PAIRING CODE:", code)
+    console.log("🔑 PAIRING CODE:", code)
 
-    } catch (err) {
-      console.log("❌ Pairing error:", err.message)
-    }
+  } catch (err) {
+    console.log("❌ Pairing error:", err.message)
   }
 }
 
