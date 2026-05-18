@@ -72,7 +72,9 @@ async function startBot() {
 
     const phone = process.env.PHONE_NUMBER
 
-    if (phone && !sock.authState?.creds?.registered) {
+    if (phone) {
+      console.log("📲 Requesting pairing code...")
+
       try {
         const code = await sock.requestPairingCode(phone)
         console.log("🔑 PAIRING CODE:", code)
