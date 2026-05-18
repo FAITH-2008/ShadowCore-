@@ -63,7 +63,9 @@ async function startBot() {
     sock.ev.on("connection.update", async (update) => {
       const { connection, lastDisconnect } = update
 
-      console.log("📡 Status:", connection)
+      if (connection) {
+  console.log("📡 Status:", connection)
+      }
 
       // ===== PAIRING (ONLY ON FIRST CONNECT) =====
       if (connection === "open") {
