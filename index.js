@@ -82,7 +82,7 @@ async function startBot() {
     // ONLY ONCE PER SESSION
     if (!sock.authState?.creds?.registered) {
       console.log("📲 Requesting pairing code...")
-      const code = await sock.requestPairingCode(phone)
+      const code = await let pairingRequested = false
       console.log("🔑 PAIRING CODE:", code)
     }
   } catch (err) {
