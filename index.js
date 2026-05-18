@@ -67,15 +67,17 @@ async function startBot() {
     console.log("📡 Status:", connection)
   }
 
-  // ===== REQUEST PAIRING CODE =====
-  if (connection === "connecting") {
+  // ===== REQUEST PAIRING CODE (FIXED) =====
+if (connection === "connecting") {
 
-    const phone = process.env.PHONE_NUMBER
+  const phone = process.env.PHONE_NUMBER
 
-    if (!phone) {
-      return console.log("❌ PHONE_NUMBER missing")
-    }
+  if (!phone) {
+    return console.log("❌ PHONE_NUMBER missing")
+  }
 
+  // only request pairing ONCE
+  if (!sock.authState?.creds?.registered) {
     try {
       console.log("📲 Requesting pairing code...")
 
@@ -87,6 +89,7 @@ async function startBot() {
       console.log("❌ Pairing error:", err.message)
     }
   }
+}
 
   // ===== CONNECTED =====
   if (connection === "open") {
