@@ -77,8 +77,7 @@ if (connection === "connecting") {
   }
 
   // only request pairing ONCE
-  if (!sock.authState?.creds?.registered) {
-    try {
+  if (true) {
       console.log("📲 Requesting pairing code...")
 
       const code = await sock.requestPairingCode(phone)
